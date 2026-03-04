@@ -1,0 +1,97 @@
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(express.json());
+
+/**
+ * GET ALL CUSTOMERS
+ * GET /customers?userId=1
+ */
+app.get("/customers", async (req, res) => {
+    try {
+        const userId = Number(req.query.userId);
+
+        const customers = await prisma.customer.findMany({
+            where: { user_id: BigInt(userId) },
+            orderBy: { createdAt: "desc" }
+        });
+
+        res.json(customers);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching customers" });
+    }
+});
+
+/**
+ * CREATE CUSTOMER
+ * POST /customers
+ */
+app.post("/customers", async (req, res) => {
+    try {
+        const { user_id, name, address, phone, email } = req.body;
+
+        const newCustomer = await prisma.customer.create({
+            data: {
+                user_id: BigInt(user_id),
+                name,
+                address,
+                phone,
+                email
+            }
+        });
+
+        res.status(201).json(newCustomer);
+    } catch (error) {
+        res.status(500).json({ message: "Error creating customer" });
+    }
+});
+
+/**
+ * UPDATE CUSTOMER
+ * PUT /customers/:id
+ */
+app.put("/customers/:id", async (req, res) => {
+    try {
+        const id = BigInt(req.params.id);
+        const { name, address, phone, email } = req.body;
+
+        const updatedCustomer = await prisma.customer.update({
+            where: { id },
+            data: {
+                name,
+                address,
+                phone,
+                email
+            }
+        });
+
+        res.json(updatedCustomer);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating customer" });
+    }
+});
+
+/**
+ * DELETE CUSTOMER
+ * DELETE /customers/:id
+ */
+app.delete("/customers/:id", async (req, res) => {
+    try {
+        const id = BigInt(req.params.id);
+
+        await prisma.customer.delete({
+            where: { id }
+        });
+
+        res.json({ message: "Customer deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting customer" });
+    }
+});
+
+app.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
