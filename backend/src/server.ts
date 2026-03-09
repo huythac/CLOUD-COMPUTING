@@ -57,8 +57,9 @@ app.post("/customers", async (req, res) => {
         });
 
         res.status(201).json(newCustomer);
-    } catch (error) {
-        res.status(500).json({ message: "Error creating customer" });
+    } catch (error: any) {
+        console.error("Lỗi POST:", error); // In ra terminal EC2
+        res.status(500).json({ message: "Error creating customer", detail: error.message });
     }
 });
 
