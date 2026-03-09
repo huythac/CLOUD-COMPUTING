@@ -1,10 +1,16 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 
 const app = express();
 const prisma = new PrismaClient();
 
+app.use(cors());
 app.use(express.json());
+
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
 
 /**
  * HEALTH CHECK
@@ -17,19 +23,23 @@ app.get("/", (req, res) => {
  * GET ALL CUSTOMERS
  * GET /customers?userId=1
  */
+// app.get("/customers", async (req, res) => {
+//     try {
+//         const userId = BigInt(req.query.userId as string);
+
+//         const customers = await prisma.customer.findMany({
+//             where: { userId: BigInt(userId) },
+//             orderBy: { createdAt: "desc" }
+//         });
+
+//         res.json(customers);
+//     } catch (error) {
+//         res.status(500).json({ message: "Error fetching customers" });
+//     }
+// });
 app.get("/customers", async (req, res) => {
-    try {
-        const userId = BigInt(req.query.userId as string);
-
-        const customers = await prisma.customer.findMany({
-            where: { userId: BigInt(userId) },
-            orderBy: { createdAt: "desc" }
-        });
-
-        res.json(customers);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching customers" });
-    }
+    const customers = await prisma.customer.findMany();
+    res.json(customers);
 });
 
 /**
