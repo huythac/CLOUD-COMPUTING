@@ -1,4 +1,4 @@
-export const API_URL = "http://3.25.176.21:3000";
+export const API_URL = "http://3.25.176.21:80";
 
 export async function fetchAPI(url: string, options?: RequestInit) {
     const res = await fetch(`${API_URL}${url}`, {

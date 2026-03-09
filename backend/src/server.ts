@@ -2,44 +2,40 @@ import express from "express";
 import { PrismaClient } from "@prisma/client";
 import cors from "cors";
 
-const app = express();
-const prisma = new PrismaClient();
-
-app.use(cors());
-app.use(express.json());
-
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
 };
 
-/**
- * HEALTH CHECK
- */
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(cors()); // THÊM DÒNG NÀY ĐỂ FRONTEND KHÔNG BỊ LỖI
+app.use(express.json());
+
 app.get("/", (req, res) => {
     res.send("API is running");
 });
 
-/**
- * GET ALL CUSTOMERS
- * GET /customers?userId=1
- */
-// app.get("/customers", async (req, res) => {
-//     try {
-//         const userId = BigInt(req.query.userId as string);
-
-//         const customers = await prisma.customer.findMany({
-//             where: { userId: BigInt(userId) },
-//             orderBy: { createdAt: "desc" }
-//         });
-
-//         res.json(customers);
-//     } catch (error) {
-//         res.status(500).json({ message: "Error fetching customers" });
-//     }
-// });
 app.get("/customers", async (req, res) => {
-    const customers = await prisma.customer.findMany();
-    res.json(customers);
+    try {
+        const userId = req.query.userId as string;
+
+        let customers;
+        if (userId) {
+            customers = await prisma.customer.findMany({
+                where: { userId: BigInt(userId) },
+                orderBy: { createdAt: "desc" }
+            });
+        } else {
+            customers = await prisma.customer.findMany();
+        }
+
+        res.json(customers);
+    } catch (error: any) {
+        // In lỗi ra terminal EC2 để dễ debug
+        console.error("Lỗi lấy danh sách:", error);
+        res.status(500).json({ message: "Error fetching customers", error: error.message });
+    }
 });
 
 /**
@@ -61,8 +57,9 @@ app.post("/customers", async (req, res) => {
         });
 
         res.status(201).json(newCustomer);
-    } catch (error) {
-        res.status(500).json({ message: "Error creating customer" });
+    } catch (error: any) {
+        console.error("Lỗi POST:", error); // In ra terminal EC2
+        res.status(500).json({ message: "Error creating customer", detail: error.message });
     }
 });
 
@@ -109,8 +106,8 @@ app.delete("/customers/:id", async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+app.listen(80, () => {
+    console.log("Server running on http://localhost:80");
 });
 
 
