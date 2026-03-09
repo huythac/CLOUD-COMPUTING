@@ -1,28 +1,45 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 
 const app = express();
 const prisma = new PrismaClient();
 
+app.use(cors());
 app.use(express.json());
+
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
+/**
+ * HEALTH CHECK
+ */
+app.get("/", (req, res) => {
+    res.send("API is running");
+});
 
 /**
  * GET ALL CUSTOMERS
  * GET /customers?userId=1
  */
+// app.get("/customers", async (req, res) => {
+//     try {
+//         const userId = BigInt(req.query.userId as string);
+
+//         const customers = await prisma.customer.findMany({
+//             where: { userId: BigInt(userId) },
+//             orderBy: { createdAt: "desc" }
+//         });
+
+//         res.json(customers);
+//     } catch (error) {
+//         res.status(500).json({ message: "Error fetching customers" });
+//     }
+// });
 app.get("/customers", async (req, res) => {
-    try {
-        const userId = Number(req.query.userId);
-
-        const customers = await prisma.customer.findMany({
-            where: { user_id: BigInt(userId) },
-            orderBy: { createdAt: "desc" }
-        });
-
-        res.json(customers);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching customers" });
-    }
+    const customers = await prisma.customer.findMany();
+    res.json(customers);
 });
 
 /**
@@ -31,11 +48,11 @@ app.get("/customers", async (req, res) => {
  */
 app.post("/customers", async (req, res) => {
     try {
-        const { user_id, name, address, phone, email } = req.body;
+        const { userId, name, address, phone, email } = req.body;
 
         const newCustomer = await prisma.customer.create({
             data: {
-                user_id: BigInt(user_id),
+                userId: BigInt(userId),
                 name,
                 address,
                 phone,
@@ -93,5 +110,7 @@ app.delete("/customers/:id", async (req, res) => {
 });
 
 app.listen(3000, () => {
-    console.log("Server running on port 3000");
+    console.log("Server running on http://localhost:3000");
 });
+
+
