@@ -2,8 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Customer } from '../types/customer';
 import {
-  createCustomer, deleteCustomer, listCustomers, seedCustomers, updateCustomer,
-} from '../data/customersRepo';
+  getCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer
+} from "../api/customer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,10 +84,10 @@ function ContactModal({
           <div className="space-y-4 px-6 py-5">
             {(
               [
-                { key: 'name',    label: 'Name',    req: true,  type: 'text',  ph: 'Full name'              },
-                { key: 'phone',   label: 'Phone',   req: true,  type: 'tel',   ph: '555-0100'               },
-                { key: 'email',   label: 'Email',   req: false, type: 'email', ph: 'optional@example.com'   },
-                { key: 'address', label: 'Address', req: false, type: 'text',  ph: 'Street, City'           },
+                { key: 'name', label: 'Name', req: true, type: 'text', ph: 'Full name' },
+                { key: 'phone', label: 'Phone', req: true, type: 'tel', ph: '555-0100' },
+                { key: 'email', label: 'Email', req: false, type: 'email', ph: 'optional@example.com' },
+                { key: 'address', label: 'Address', req: false, type: 'text', ph: 'Street, City' },
               ] as { key: keyof FormFields; label: string; req: boolean; type: string; ph: string }[]
             ).map(({ key, label, req, type, ph }, i) => (
               <div key={key}>
@@ -127,18 +130,22 @@ export default function ContactsPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    seedCustomers(USER_ID);
-    setCustomers(listCustomers(USER_ID));
-    setReady(true);
+    loadCustomers();
   }, []);
+
+  async function loadCustomers() {
+    const data = await getCustomers(Number(USER_ID));
+    setCustomers(data);
+    setReady(true);
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return q
       ? customers.filter((c) =>
-          c.name.toLowerCase().includes(q) ||
-          (c.email ?? '').toLowerCase().includes(q) ||
-          c.phone.toLowerCase().includes(q))
+        c.name.toLowerCase().includes(q) ||
+        (c.email ?? '').toLowerCase().includes(q) ||
+        c.phone.toLowerCase().includes(q))
       : customers;
   }, [customers, search]);
 
@@ -146,7 +153,9 @@ export default function ContactsPage() {
   const selVisible = useMemo(() => [...selected].filter((id) => visibleIds.has(id)), [selected, visibleIds]);
   const allSelected = filtered.length > 0 && selVisible.length === filtered.length;
 
-  function reload() { setCustomers(listCustomers(USER_ID)); }
+  function reload() {
+    loadCustomers();
+  }
 
   function toggleAll() {
     setSelected((prev) => {
@@ -160,18 +169,35 @@ export default function ContactsPage() {
     setSelected((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   }
 
-  function handleSave(fields: FormFields) {
-    const payload = { ...fields, email: fields.email || undefined, address: fields.address || undefined };
-    if (modal === 'new') createCustomer(USER_ID, payload);
-    else if (modal) updateCustomer(modal.id, payload);
+  async function handleSave(fields: FormFields) {
+    const payload = {
+      userId: Number(USER_ID),
+      ...fields,
+      email: fields.email || undefined,
+      address: fields.address || undefined
+    };
+
+    if (modal === "new") {
+      await createCustomer(payload);
+    } else if (modal) {
+      await updateCustomer(Number(modal.id), payload);
+    }
+
     reload();
     setModal(null);
   }
 
-  function handleDelete(c: Customer) {
+  async function handleDelete(c: Customer) {
     if (!window.confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
-    deleteCustomer(c.id);
-    setSelected((prev) => { const s = new Set(prev); s.delete(c.id); return s; });
+
+    await deleteCustomer(Number(c.id));
+
+    setSelected((prev) => {
+      const s = new Set(prev);
+      s.delete(c.id);
+      return s;
+    });
+
     reload();
   }
 

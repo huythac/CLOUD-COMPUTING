@@ -1,101 +1,76 @@
 import express from "express";
-import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 
 const app = express();
 const prisma = new PrismaClient();
 
-/* ===============================
-   MIDDLEWARE
-================================ */
-
-app.use(
-    cors({
-        origin: "http://localhost:5173", // frontend vite
-    })
-);
-
+app.use(cors());
 app.use(express.json());
 
-/* ===============================
-   FIX BIGINT JSON ERROR
-================================ */
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
 
-app.use((req, res, next) => {
-    const oldJson = res.json;
-
-    res.json = function (data) {
-        return oldJson.call(
-            this,
-            JSON.parse(
-                JSON.stringify(data, (_, value) =>
-                    typeof value === "bigint" ? value.toString() : value
-                )
-            )
-        );
-    };
-
-    next();
+/**
+ * HEALTH CHECK
+ */
+app.get("/", (req, res) => {
+    res.send("API is running");
 });
-
-/* ===============================
-   ROUTES
-================================ */
 
 /**
  * GET ALL CUSTOMERS
- * GET /api/customers?userId=1
+ * GET /customers?userId=1
  */
-app.get("/api/customers", async (req, res) => {
-    try {
-        const userId = Number(req.query.userId || 1);
+// app.get("/customers", async (req, res) => {
+//     try {
+//         const userId = BigInt(req.query.userId as string);
 
-        const customers = await prisma.customer.findMany({
-            where: {
-                user_id: BigInt(userId),
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
+//         const customers = await prisma.customer.findMany({
+//             where: { userId: BigInt(userId) },
+//             orderBy: { createdAt: "desc" }
+//         });
 
-        res.json(customers);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error fetching customers" });
-    }
+//         res.json(customers);
+//     } catch (error) {
+//         res.status(500).json({ message: "Error fetching customers" });
+//     }
+// });
+app.get("/customers", async (req, res) => {
+    const customers = await prisma.customer.findMany();
+    res.json(customers);
 });
 
 /**
  * CREATE CUSTOMER
- * POST /api/customers
+ * POST /customers
  */
-app.post("/api/customers", async (req, res) => {
+app.post("/customers", async (req, res) => {
     try {
-        const { user_id, name, address, phone, email } = req.body;
+        const { userId, name, address, phone, email } = req.body;
 
         const newCustomer = await prisma.customer.create({
             data: {
-                user_id: BigInt(user_id),
+                userId: BigInt(userId),
                 name,
                 address,
                 phone,
-                email,
-            },
+                email
+            }
         });
 
         res.status(201).json(newCustomer);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Error creating customer" });
     }
 });
 
 /**
  * UPDATE CUSTOMER
- * PUT /api/customers/:id
+ * PUT /customers/:id
  */
-app.put("/api/customers/:id", async (req, res) => {
+app.put("/customers/:id", async (req, res) => {
     try {
         const id = BigInt(req.params.id);
         const { name, address, phone, email } = req.body;
@@ -106,42 +81,36 @@ app.put("/api/customers/:id", async (req, res) => {
                 name,
                 address,
                 phone,
-                email,
-            },
+                email
+            }
         });
 
         res.json(updatedCustomer);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Error updating customer" });
     }
 });
 
 /**
  * DELETE CUSTOMER
- * DELETE /api/customers/:id
+ * DELETE /customers/:id
  */
-app.delete("/api/customers/:id", async (req, res) => {
+app.delete("/customers/:id", async (req, res) => {
     try {
         const id = BigInt(req.params.id);
 
         await prisma.customer.delete({
-            where: { id },
+            where: { id }
         });
 
         res.json({ message: "Customer deleted successfully" });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ message: "Error deleting customer" });
     }
 });
 
-/* ===============================
-   SERVER
-================================ */
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
 });
+
+
