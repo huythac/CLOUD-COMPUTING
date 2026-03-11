@@ -1,3 +1,4 @@
+import { fetchAPI } from "../api/api";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { CommunicationLog } from '../types/log';
@@ -66,21 +67,50 @@ export default function SendPage() {
 
   const canSend = recipientIds.length > 0 && message.trim().length > 0 && !sent;
 
-  function handleSend() {
-    const sendResults = mockSend(recipientIds, nameMap);
-    const log: CommunicationLog = {
-      id: uuid(),
-      createdAt: nowISO(),
-      channel,
-      message,
-      recipientIds,
-      results: sendResults.map(({ recipientId, status, error }) => ({ recipientId, status, error })),
-    };
-    appendLog(log);
-    setResults(sendResults);
+  async function handleSend() {
+
+    const customers = listCustomers("1");
+
+    const results: SendResult[] = [];
+
+    for (const id of recipientIds) {
+
+      const customer = customers.find(c => c.id === id);
+
+      try {
+
+        await fetchAPI("/send", {
+          method: "POST",
+          body: JSON.stringify({
+            userId: 1,
+            customerId: Number(id),
+            type: channel.toUpperCase(),
+            to: channel === "email" ? customer?.email : customer?.phone,
+            subject: "Cloud Message",
+            message
+          })
+        });
+
+        results.push({
+          recipientId: id,
+          name: customer?.name || id,
+          status: "success"
+        });
+
+      } catch (e) {
+
+        results.push({
+          recipientId: id,
+          name: customer?.name || id,
+          status: "failed"
+        });
+
+      }
+    }
+
+    setResults(results);
     setSent(true);
   }
-
   function handleClear() {
     localStorage.removeItem('selectedCustomerIds');
     setRecipientIds([]);
@@ -90,7 +120,7 @@ export default function SendPage() {
   }
 
   const successCount = results?.filter((r) => r.status === 'success').length ?? 0;
-  const failCount    = results?.filter((r) => r.status === 'failed').length  ?? 0;
+  const failCount = results?.filter((r) => r.status === 'failed').length ?? 0;
 
   return (
     <div className={`mx-auto max-w-2xl space-y-6 transition-opacity duration-150 ${ready ? 'opacity-100' : 'opacity-0'}`}>
@@ -106,9 +136,8 @@ export default function SendPage() {
       </div>
 
       {/* Recipients banner */}
-      <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${
-        recipientIds.length === 0 ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
-      }`}>
+      <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${recipientIds.length === 0 ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
+        }`}>
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${recipientIds.length === 0 ? 'bg-amber-400' : 'bg-emerald-500'}`} />
           <span className="text-sm font-medium text-slate-700">
@@ -177,7 +206,7 @@ export default function SendPage() {
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
           <p className="text-xs text-slate-400">
-            {sent ? 'Message sent. Log saved.' : 'No real messages will be sent — mock only.'}
+            {sent ? 'Message sent. Log saved.' : 'Messages are sent via cloud communication service.'}
           </p>
           <div className="flex gap-2">
             {sent && (
@@ -224,11 +253,10 @@ export default function SendPage() {
                 <tr key={r.recipientId} className="transition-colors hover:bg-slate-50">
                   <td className="px-5 py-3.5 text-sm font-medium text-slate-800">{r.name}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
-                      r.status === 'success'
-                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                        : 'bg-red-50 text-red-600 ring-red-500/20'
-                    }`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${r.status === 'success'
+                      ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+                      : 'bg-red-50 text-red-600 ring-red-500/20'
+                      }`}>
                       {r.status === 'success' ? 'Delivered' : 'Failed'}
                     </span>
                   </td>
