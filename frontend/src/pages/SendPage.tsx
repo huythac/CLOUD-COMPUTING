@@ -1,10 +1,8 @@
+import { getCustomers } from "../api/customer";
 import { fetchAPI } from "../api/api";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { CommunicationLog } from '../types/log';
 import { listCustomers } from '../data/customersRepo';
-import { appendLog } from '../data/logsRepo';
-import { uuid, nowISO } from '../data/storage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,18 +24,6 @@ function loadIds(): string[] {
     const raw = localStorage.getItem('selectedCustomerIds');
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch { return []; }
-}
-
-function mockSend(ids: string[], nameMap: Map<string, string>): SendResult[] {
-  return ids.map((id) => {
-    const failed = Math.random() < 0.2;
-    return {
-      recipientId: id,
-      name: nameMap.get(id) ?? id,
-      status: failed ? 'failed' : 'success',
-      error: failed ? MOCK_ERRORS[Math.floor(Math.random() * MOCK_ERRORS.length)] : undefined,
-    };
-  });
 }
 
 // ─── Shared style helpers ─────────────────────────────────────────────────────
@@ -69,13 +55,13 @@ export default function SendPage() {
 
   async function handleSend() {
 
-    const customers = listCustomers("1");
+    const customers = await getCustomers(1);
 
     const results: SendResult[] = [];
 
     for (const id of recipientIds) {
 
-      const customer = customers.find(c => c.id === id);
+      const customer = customers.find((c: any) => String(c.id) === id);
 
       try {
 
@@ -97,7 +83,7 @@ export default function SendPage() {
           status: "success"
         });
 
-      } catch (e) {
+      } catch {
 
         results.push({
           recipientId: id,

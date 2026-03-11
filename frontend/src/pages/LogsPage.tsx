@@ -45,8 +45,8 @@ function ExpandedDetails({
                   <td className="px-4 py-2.5">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${r.status === 'success'
-                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                          : 'bg-red-50 text-red-600 ring-red-500/20'
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+                        : 'bg-red-50 text-red-600 ring-red-500/20'
                         }`}
                     >
                       {r.status === 'success' ? 'Delivered' : 'Failed'}
@@ -219,8 +219,8 @@ export default function LogsPage() {
                       <td className={tdCls}>
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${log.channel === 'email'
-                              ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
-                              : 'bg-violet-50 text-violet-700 ring-violet-600/20'
+                            ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                            : 'bg-violet-50 text-violet-700 ring-violet-600/20'
                             }`}
                         >
                           {log.channel === 'email' ? 'Email' : 'SMS'}
