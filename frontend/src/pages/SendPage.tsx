@@ -15,8 +15,6 @@ type SendResult = {
   error?: string;
 };
 
-const MOCK_ERRORS = ['Mailbox full', 'Invalid address', 'Recipient unreachable', 'Delivery timeout'];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function loadIds(): string[] {
@@ -34,7 +32,7 @@ const thCls = 'px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wi
 
 export default function SendPage() {
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
-  const [nameMap, setNameMap] = useState<Map<string, string>>(new Map());
+  const [_nameMap, setNameMap] = useState<Map<string, string>>(new Map());
   const [channel, setChannel] = useState<Channel>('email');
   const [message, setMessage] = useState('');
   const [results, setResults] = useState<SendResult[] | null>(null);
