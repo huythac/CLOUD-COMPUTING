@@ -7,6 +7,7 @@ import {
   updateCustomer,
   deleteCustomer
 } from "../api/customer";
+import { useAuth } from '../contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,10 +120,9 @@ function ContactModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const USER_ID = '1';
-
 export default function ContactsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -134,7 +134,7 @@ export default function ContactsPage() {
   }, []);
 
   async function loadCustomers() {
-    const data = await getCustomers(Number(USER_ID));
+    const data = await getCustomers(Number(user!.id));
     setCustomers(data);
     setReady(true);
   }
@@ -171,7 +171,7 @@ export default function ContactsPage() {
 
   async function handleSave(fields: FormFields) {
     const payload = {
-      userId: Number(USER_ID),
+      userId: Number(user!.id),
       ...fields,
       email: fields.email || undefined,
       address: fields.address || undefined

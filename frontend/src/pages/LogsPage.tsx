@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getLogs } from "../api/log";
 import { getCustomers } from "../api/customer";
+import { useAuth } from "../contexts/AuthContext";
 
 type ChannelFilter = "all" | "email" | "sms";
 
@@ -10,6 +11,7 @@ const thCls =
 const tdCls = "px-5 py-3.5 text-sm";
 
 export default function LogsPage() {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<any[]>([]);
   const [nameMap, setNameMap] = useState<Map<string, string>>(new Map());
   const [search, setSearch] = useState("");
@@ -22,7 +24,7 @@ export default function LogsPage() {
       const logs = await getLogs();
       setLogs(logs);
 
-      const customers = await getCustomers(1);
+      const customers = await getCustomers(Number(user!.id));
       setNameMap(
         new Map(customers.map((c: any) => [String(c.id), c.name]))
       );

@@ -1,7 +1,7 @@
 import { fetchAPI } from "./api";
 
-export function getCustomers(userId: number) {
-    return fetchAPI(`/customers?userId=${userId}`);
+export function getCustomers(_userId?: number) {
+    return fetchAPI(`/customers`);
 }
 
 export function createCustomer(data: any) {

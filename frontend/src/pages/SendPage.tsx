@@ -2,7 +2,7 @@ import { getCustomers } from "../api/customer";
 import { fetchAPI } from "../api/api";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listCustomers } from '../data/customersRepo';
+import { useAuth } from '../contexts/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,7 @@ const thCls = 'px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wi
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SendPage() {
+  const { user } = useAuth();
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
   const [_nameMap, setNameMap] = useState<Map<string, string>>(new Map());
   const [channel, setChannel] = useState<Channel>('email');
@@ -42,10 +43,6 @@ export default function SendPage() {
   useEffect(() => {
     const ids = loadIds();
     setRecipientIds(ids);
-    if (ids.length > 0) {
-      const customers = listCustomers('1');
-      setNameMap(new Map(customers.map((c) => [c.id, c.name])));
-    }
     setReady(true);
   }, []);
 
@@ -53,7 +50,7 @@ export default function SendPage() {
 
   async function handleSend() {
 
-    const customers = await getCustomers(1);
+    const customers = await getCustomers(Number(user!.id));
 
     const results: SendResult[] = [];
 
@@ -66,7 +63,7 @@ export default function SendPage() {
         await fetchAPI("/send", {
           method: "POST",
           body: JSON.stringify({
-            userId: 1,
+            userId: Number(user!.id),
             customerId: Number(id),
             type: channel.toUpperCase(),
             to: channel === "email" ? customer?.email : customer?.phone,
