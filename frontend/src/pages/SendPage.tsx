@@ -2,7 +2,6 @@ import { getCustomers } from "../api/customer";
 import { fetchAPI } from "../api/api";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listCustomers } from '../data/customersRepo';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,13 +39,31 @@ export default function SendPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const ids = loadIds();
-    setRecipientIds(ids);
-    if (ids.length > 0) {
-      const customers = listCustomers('1');
-      setNameMap(new Map(customers.map((c) => [c.id, c.name])));
+    async function initPage() {
+      const ids = loadIds();
+      setRecipientIds(ids);
+
+      if (ids.length > 0) {
+        try {
+          // GỌI API THẬT ĐỂ LẤY TÊN KHÁCH HÀNG
+          const customers = await getCustomers(1);
+          const newNameMap = new Map();
+
+          customers.forEach((c: any) => {
+            if (ids.includes(String(c.id))) {
+              newNameMap.set(String(c.id), c.name);
+            }
+          });
+
+          setNameMap(newNameMap);
+        } catch (error) {
+          console.error("Failed to fetch customer names for display", error);
+        }
+      }
+      setReady(true);
     }
-    setReady(true);
+
+    initPage();
   }, []);
 
   const canSend = recipientIds.length > 0 && message.trim().length > 0 && !sent;
