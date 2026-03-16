@@ -23,6 +23,10 @@ model User {
   email     String   @unique
   password  String
 
+  // Bổ sung 2 trường này cho tính năng Quên mật khẩu
+  resetToken       String?            @unique
+  resetTokenExpiry DateTime?
+
   customers Customer[]
   logs      CommunicationLog[]
 }
