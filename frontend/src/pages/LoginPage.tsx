@@ -70,7 +70,7 @@ export default function LoginPage() {
                     <form onSubmit={handleSubmit} noValidate className="space-y-4">
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                                Username
+                                Email
                             </label>
                             <input
                                 ref={usernameRef}
