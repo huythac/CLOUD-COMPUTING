@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Icons = {
   Contacts: (
@@ -25,6 +27,22 @@ const NAV = [
 ];
 
 export default function Layout() {
+  // 1. Khai báo state để ẩn/hiện menu
+  const [showMenu, setShowMenu] = useState(false);
+
+  // 2. Lấy thông tin user và hàm logout từ AuthContext
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // 3. Hàm xử lý khi bấm nút Đăng xuất
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
+  // 4. Lấy chữ cái đầu tiên của tên User, nếu chưa load xong thì để tạm chữ U
+  const initial = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+
   return (
     <div className="flex h-full bg-slate-50">
 
@@ -69,9 +87,34 @@ export default function Layout() {
               placeholder="Search…"
               className="h-8 w-48 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 placeholder-slate-400 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
             />
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-              A
+
+            {/* VÙNG ĐÃ ĐƯỢC CHỈNH SỬA: Avatar + Nút Đăng xuất */}
+            <div className="relative">
+              <div
+                onClick={() => setShowMenu(!showMenu)}
+                className="flex h-8 w-8 cursor-pointer flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700"
+              >
+                {initial}
+              </div>
+
+              {/* Menu Đăng xuất (Chỉ hiện khi showMenu = true) */}
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/5 z-50">
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    <p className="truncate text-sm font-medium text-slate-900">{user?.email || 'Tài khoản'}</p>
+                    <p className="truncate text-xs text-slate-500">{user?.email || 'email@example.com'}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-slate-50 font-medium"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
             </div>
+            {/* HẾT VÙNG ĐÃ ĐƯỢC CHỈNH SỬA */}
+
           </div>
         </header>
 
