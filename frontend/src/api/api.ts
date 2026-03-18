@@ -16,4 +16,4 @@ export async function fetchAPI(url: string, options?: RequestInit) {
     }
 
     return res.json();
-}
+}   
