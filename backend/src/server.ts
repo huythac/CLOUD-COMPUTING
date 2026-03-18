@@ -301,32 +301,38 @@ app.post("/send", async (req, res) => {
 
         let result;
 
-        // 1. Sửa 'sms' thành 'SMS' cho chuẩn form
         if (type === 'SMS') {
-            // --- BẮT ĐẦU ĐOẠN SPEEDSMS ---
-            const speedSmsToken = Buffer.from(process.env.SPEEDSMS_TOKEN + ':x').toString('base64');
+            // --- BẮT ĐẦU ĐOẠN INFOBIP ---
+            const infobipApiKey = process.env.INFOBIP_API_KEY;
+            const infobipBaseUrl = process.env.INFOBIP_BASE_URL;
 
-            const smsResponse = await fetch('https://api.speedsms.vn/index.php/sms/send', {
+            const smsResponse = await fetch(`https://${infobipBaseUrl}/sms/2/text/advanced`, {
                 method: 'POST',
                 headers: {
+                    'Authorization': `App ${infobipApiKey}`,
                     'Content-Type': 'application/json',
-                    'Authorization': `Basic ${speedSmsToken}`
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    to: [to], // 2. Đổi req.body.phone thành to
-                    content: message, // Dùng luôn biến message đã destructuring ở trên
-                    sms_type: 3,
-                    sender: ""
+                    messages: [
+                        {
+                            destinations: [
+                                { to: to } // Truyền số điện thoại khách hàng vào đây
+                            ],
+                            from: "Service", // Tên người gửi (Infobip cho phép chuỗi ngắn)
+                            text: message
+                        }
+                    ]
                 })
             });
 
-            // 3. Bỏ chữ const đi để dùng đúng biến result ở ngoài
             result = await smsResponse.json();
 
-            if (result.status !== 'success') {
-                throw new Error(`SpeedSMS Error: ${result.message}`);
+            // Bắt lỗi nếu request thất bại
+            if (!smsResponse.ok) {
+                throw new Error(`Infobip Error: ${JSON.stringify(result)}`);
             }
-            // --- KẾT THÚC ĐOẠN SPEEDSMS ---
+            // --- KẾT THÚC ĐOẠN INFOBIP ---
         }
 
         if (type === "EMAIL") {
