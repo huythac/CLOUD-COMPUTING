@@ -4,7 +4,7 @@ dotenv.config();
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import cors from "cors";
-import twilio from "twilio";
+//import twilio from "twilio";
 import sgMail from "@sendgrid/mail";
 import crypto from 'crypto';
 
@@ -27,10 +27,10 @@ app.use(express.json());
    CONFIG EXTERNAL SERVICES
 ========================= */
 
-const smsClient = twilio(
-    process.env.TWILIO_SID,
-    process.env.TWILIO_TOKEN
-);
+// const smsClient = twilio(
+//     process.env.TWILIO_SID,
+//     process.env.TWILIO_TOKEN
+// );
 
 sgMail.setApiKey(process.env.SENDGRID_KEY!);
 
@@ -301,12 +301,32 @@ app.post("/send", async (req, res) => {
 
         let result;
 
-        if (type === "SMS") {
-            result = await smsClient.messages.create({
-                body: message,
-                from: process.env.TWILIO_PHONE,
-                to
+        // 1. Sửa 'sms' thành 'SMS' cho chuẩn form
+        if (type === 'SMS') {
+            // --- BẮT ĐẦU ĐOẠN SPEEDSMS ---
+            const speedSmsToken = Buffer.from(process.env.SPEEDSMS_TOKEN + ':x').toString('base64');
+
+            const smsResponse = await fetch('https://api.speedsms.vn/index.php/sms/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${speedSmsToken}`
+                },
+                body: JSON.stringify({
+                    to: [to], // 2. Đổi req.body.phone thành to
+                    content: message, // Dùng luôn biến message đã destructuring ở trên
+                    sms_type: 3,
+                    sender: ""
+                })
             });
+
+            // 3. Bỏ chữ const đi để dùng đúng biến result ở ngoài
+            result = await smsResponse.json();
+
+            if (result.status !== 'success') {
+                throw new Error(`SpeedSMS Error: ${result.message}`);
+            }
+            // --- KẾT THÚC ĐOẠN SPEEDSMS ---
         }
 
         if (type === "EMAIL") {
@@ -357,7 +377,6 @@ app.post("/send", async (req, res) => {
         });
     }
 });
-
 /* =========================
    LOG ROUTES
 ========================= */
