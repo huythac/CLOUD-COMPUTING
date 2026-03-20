@@ -320,7 +320,7 @@ app.post("/send", async (req, res) => {
                     to: [to], // Truyền số điện thoại khách hàng vào đây
                     content: message,
                     sms_type: 2,
-                    sender: "" // Để trống để SpeedSMS tự dùng Sender mặc định
+                    sender: "SPEED SMS" // Để trống để SpeedSMS tự dùng Sender mặc định
                 })
             });
 
@@ -329,10 +329,10 @@ app.post("/send", async (req, res) => {
             if (result.status !== 'success') {
                 console.error(`[SpeedSMS Log] Lỗi gửi tin: ${JSON.stringify(result)}`);
                 // Thay vì quăng lỗi (throw), chúng ta trả về một object để báo cho Frontend biết
-                return {
+                return res.status(400).json({
                     success: false,
                     message: `Không thể gửi SMS do lỗi từ nhà mạng: ${result.message}`
-                };
+                });
             }
         }
 
