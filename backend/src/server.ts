@@ -322,9 +322,13 @@ app.post("/send", async (req, res) => {
 
             result = await smsResponse.json();
 
-            // Nếu SpeedSMS báo lỗi (ví dụ: hết tiền, sai số...)
             if (result.status !== 'success') {
-                throw new Error(`SpeedSMS Error: ${JSON.stringify(result)}`);
+                console.error(`[SpeedSMS Log] Lỗi gửi tin: ${JSON.stringify(result)}`);
+                // Thay vì quăng lỗi (throw), chúng ta trả về một object để báo cho Frontend biết
+                return {
+                    success: false,
+                    message: `Không thể gửi SMS do lỗi từ nhà mạng: ${result.message}`
+                };
             }
         }
 
