@@ -20,7 +20,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'cloud_computing_2026';
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use(cors({
+    origin: '*', // Chấp nhận mọi Frontend gọi vào (Dễ nhất cho đồ án)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 /* =========================
